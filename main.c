@@ -6,7 +6,7 @@
 #define VENTANA 100
 #define OFF 0
 
-const uint8_t color_pista;
+volatile uint8_t color_pista;
 
 ISR(TIMER1_COMPA_vect){
     TCCR1B = 0;
