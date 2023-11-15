@@ -51,35 +51,32 @@ ISR(TIMER2_COMPA_vect){
     if(linea_negra){
         estado = ~estado & 0x1F;
     }
-    if(estado == 0x01 || estado == 0x03){
+    if(estado & 0x01){
         set_speed(DOBLAR_FUERTE);
         habilitar_motores(DERECHA);
         return;
     }
-    if(estado == 0x10 || estado == 0x18){
+    if(estado & 0x10){
         set_speed(DOBLAR_FUERTE);
         habilitar_motores(IZQUIERDA);
         return;
     }
-    if(estado == 0x02 || estado == 0x06){
+    if(estado & 0x02){
         set_speed(DOBLAR_SUAVE);
         habilitar_motores(DERECHA);
         return;
     }
-    if(estado == 0x08 || estado == 0x0C){
+    if(estado & 0x08){
         set_speed(DOBLAR_SUAVE);
         habilitar_motores(IZQUIERDA);
         return;
     }
-    if(estado == 0x04){
+    if(estado & 0x04){
         set_speed(ACELERAR);
         habilitar_motores(ADELANTE);
         return;
     }
-    if(estado == 0x00){
-        iniciar_conteo(APAGADO);
-        return;
-    }
+    iniciar_conteo(APAGADO);
 }
 
 void init_pwm_motores(void){
