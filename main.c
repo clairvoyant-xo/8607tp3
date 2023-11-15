@@ -4,6 +4,7 @@
 
 #define TIEMPO_INICIO 5000
 #define VENTANA 100
+#define APAGADO 31250
 #define ACELERAR 255
 #define DOBLAR_SUAVE 230
 #define DOBLAR_FUERTE 200
@@ -34,9 +35,15 @@ void set_speed(uint8_t velocidad){
 }
 
 ISR(TIMER1_COMPA_vect){
+    uint8_t estado = PINC;
+    if(color_pista){
+        estado = ~estado;
+    }
+    if((estado & 0x1F) == 0x1F){
+        set_speed(OFF);
+        habilitar_motores(OFF);
+    }
     TCCR1B = 0;
-    set_speed(OFF);
-    habilitar_motores(OFF);
 }
 
 ISR(TIMER2_COMPA_vect){
@@ -47,23 +54,29 @@ ISR(TIMER2_COMPA_vect){
     if((estado & 0x1F) == 0x1B){
         set_speed(ACELERAR);
         habilitar_motores(ADELANTE);
+        return;
     }
     if((estado & 0x03) == 0x01){
         set_speed(DOBLAR_SUAVE);
         habilitar_motores(DERECHA);
+        return;
     }
     if((estado & 0x01) == 0x00){
         set_speed(DOBLAR_FUERTE);
         habilitar_motores(DERECHA);
+        return;
     }
     if((estado & 0x18) == 0x10){
         set_speed(DOBLAR_SUAVE);
         habilitar_motores(IZQUIERDA);
+        return;
     }
     if((estado & 0x10) == 0x00){
         set_speed(DOBLAR_FUERTE);
         habilitar_motores(IZQUIERDA);
+        return;
     }
+    iniciar_conteo(APAGADO);
 }
 
 void init_pwm_motores(void){
