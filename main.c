@@ -34,15 +34,19 @@ void set_speed(uint8_t velocidad){
     OCR0B = velocidad;
 }
 
+void iniciar_conteo(uint16_t tiempo){
+    OCR1A = tiempo;
+    TCCR1B = (1 << WGM12) | (1 << CS12) | (1 << CS10);
+}
+
+void apagar_conteo(void){
+    TCCR1B = 0;
+    TCNT1 = 0;    
+}
+
 ISR(TIMER1_COMPA_vect){
-    uint8_t estado = PINC & 0x1F;
-    if(linea_negra){
-        estado = ~estado & 0x1F;
-    }
-    if(estado == 0x00){
-        set_speed(OFF);
-        habilitar_motores(OFF);
-    }
+    set_speed(OFF);
+    habilitar_motores(OFF);
     TCCR1B = 0;
 }
 
@@ -51,6 +55,11 @@ ISR(TIMER2_COMPA_vect){
     if(linea_negra){
         estado = ~estado & 0x1F;
     }
+    if(estado == 0x00){
+        iniciar_conteo(APAGADO);
+        return;
+    }
+    apagar_conteo();
     if(estado & 0x01){
         set_speed(DOBLAR_FUERTE);
         habilitar_motores(DERECHA);
@@ -76,7 +85,6 @@ ISR(TIMER2_COMPA_vect){
         habilitar_motores(ADELANTE);
         return;
     }
-    iniciar_conteo(APAGADO);
 }
 
 void init_pwm_motores(void){
@@ -90,11 +98,6 @@ void init_timer_conteo(void){
     TCCR1B = 0;
     TCNT1 = 0;
     TIMSK1 = (1 << OCIE1A);
-}
-
-void iniciar_conteo(uint8_t tiempo){
-    OCR1A = tiempo;
-    TCCR1B = (1 << WGM12) | (1 << CS12) | (1 << CS10);
 }
 
 void init_timer_sensores(void){
