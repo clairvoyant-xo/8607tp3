@@ -13,7 +13,7 @@
 #define DERECHA 0x02
 #define OFF 0
 
-volatile uint8_t color_pista;
+volatile uint8_t linea_negra;
 
 void habilitar_motores(uint8_t modo){
     PORTB &= 0xEF;
@@ -35,11 +35,11 @@ void set_speed(uint8_t velocidad){
 }
 
 ISR(TIMER1_COMPA_vect){
-    uint8_t estado = PINC;
-    if(color_pista){
-        estado = ~estado;
+    uint8_t estado = PINC & 0x1F;
+    if(linea_negra){
+        estado = ~estado & 0x1F;
     }
-    if((estado & 0x1F) == 0x1F){
+    if(estado == 0x00){
         set_speed(OFF);
         habilitar_motores(OFF);
     }
@@ -47,36 +47,39 @@ ISR(TIMER1_COMPA_vect){
 }
 
 ISR(TIMER2_COMPA_vect){
-    uint8_t estado = PINC;
-    if(color_pista){
-        estado = ~estado;
+    uint8_t estado = PINC & 0x1F;
+    if(linea_negra){
+        estado = ~estado & 0x1F;
     }
-    if((estado & 0x1F) == 0x1B){
+    if(estado == 0x01 || estado == 0x03){
+        set_speed(DOBLAR_FUERTE);
+        habilitar_motores(DERECHA);
+        return;
+    }
+    if(estado == 0x10 || estado == 0x18){
+        set_speed(DOBLAR_FUERTE);
+        habilitar_motores(IZQUIERDA);
+        return;
+    }
+    if(estado == 0x02 || estado == 0x06){
+        set_speed(DOBLAR_SUAVE);
+        habilitar_motores(DERECHA);
+        return;
+    }
+    if(estado == 0x08 || estado == 0x0C){
+        set_speed(DOBLAR_SUAVE);
+        habilitar_motores(IZQUIERDA);
+        return;
+    }
+    if(estado == 0x04){
         set_speed(ACELERAR);
         habilitar_motores(ADELANTE);
         return;
     }
-    if((estado & 0x03) == 0x01){
-        set_speed(DOBLAR_SUAVE);
-        habilitar_motores(DERECHA);
+    if(estado == 0x00){
+        iniciar_conteo(APAGADO);
         return;
     }
-    if((estado & 0x01) == 0x00){
-        set_speed(DOBLAR_FUERTE);
-        habilitar_motores(DERECHA);
-        return;
-    }
-    if((estado & 0x18) == 0x10){
-        set_speed(DOBLAR_SUAVE);
-        habilitar_motores(IZQUIERDA);
-        return;
-    }
-    if((estado & 0x10) == 0x00){
-        set_speed(DOBLAR_FUERTE);
-        habilitar_motores(IZQUIERDA);
-        return;
-    }
-    iniciar_conteo(APAGADO);
 }
 
 void init_pwm_motores(void){
@@ -113,13 +116,13 @@ void init_pins(void){
 
 void determinar_pista(void){
     while(1){
-        uint8_t estado = PINC;
-        if(estado == 0x1B){
-            color_pista = 0;
+        uint8_t estado = PINC & 0x1F;
+        if(estado == 0x04){
+            linea_negra = 0;
             break;
         }
-        if(estado == 0x04){
-            color_pista = 1;
+        if(estado == 0x1B){
+            linea_negra = 1;
             break;
         }
     }
