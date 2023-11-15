@@ -14,19 +14,6 @@
 
 volatile uint8_t color_pista;
 
-void set_speed(uint8_t velocidad){
-    OCR0A = velocidad;
-    OCR0B = velocidad;
-}
-
-void habilitar_motores(uint8_t modo){
-    PORTB &= 0xEF;
-    for(uint8_t i = 0; i < 8; i++){
-        PORTD &= 0xEF;void set_speed(uint8_t velocidad){
-    OCR0A = velocidad;
-    OCR0B = velocidad;
-}
-
 void habilitar_motores(uint8_t modo){
     PORTB &= 0xEF;
     for(uint8_t i = 0; i < 8; i++){
@@ -41,14 +28,9 @@ void habilitar_motores(uint8_t modo){
     PORTB |= 0x10;
 }
 
-        if((modo & (1 << i)) == 0){
-            PORTB &= 0xFE;
-        } else{
-            PORTB |= 0x01;
-        }
-        PORTD |= 0x10;
-    }
-    PORTB |= 0x10;
+void set_speed(uint8_t velocidad){
+    OCR0A = velocidad;
+    OCR0B = velocidad;
 }
 
 ISR(TIMER1_COMPA_vect){
@@ -59,48 +41,28 @@ ISR(TIMER1_COMPA_vect){
 
 ISR(TIMER2_COMPA_vect){
     uint8_t estado = PINC;
-    if(color_pista == 1){
-        if((estado & 0x1F) == 0x1B){
-            set_speed(ACELERAR);
-            habilitar_motores(ADELANTE);
-        }
-        if((estado & 0x03) == 0x01){
-            set_speed(DOBLAR_SUAVE);
-            habilitar_motores(DERECHA);
-        }
-        if((estado & 0x01) == 0x00){
-            set_speed(DOBLAR_FUERTE);
-            habilitar_motores(DERECHA);
-        }
-        if((estado & 0x18) == 0x10){
-            set_speed(DOBLAR_SUAVE);
-            habilitar_motores(IZQUIERDA);
-        }
-        if((estado & 0x10) == 0x00){
-            set_speed(DOBLAR_FUERTE);
-            habilitar_motores(IZQUIERDA);
-        }         
-    } else{
-        if((estado & 0x1F) == 0x04){
-            set_speed(ACELERAR);
-            habilitar_motores(ADELANTE);
-        }
-        if((estado & 0x03) == 0x02){
-            set_speed(DOBLAR_SUAVE);
-            habilitar_motores(DERECHA);
-        }
-        if((estado & 0x01) == 0x01){
-            set_speed(DOBLAR_FUERTE);
-            habilitar_motores(DERECHA);
-        }
-        if((estado & 0x18) == 0x08){
-            set_speed(DOBLAR_SUAVE);
-            habilitar_motores(IZQUIERDA);
-        }
-        if((estado & 0x10) == 0x10){
-            set_speed(DOBLAR_FUERTE);
-            habilitar_motores(IZQUIERDA);
-        }          
+    if(color_pista){
+        estado = ~estado;
+    }
+    if((estado & 0x1F) == 0x1B){
+        set_speed(ACELERAR);
+        habilitar_motores(ADELANTE);
+    }
+    if((estado & 0x03) == 0x01){
+        set_speed(DOBLAR_SUAVE);
+        habilitar_motores(DERECHA);
+    }
+    if((estado & 0x01) == 0x00){
+        set_speed(DOBLAR_FUERTE);
+        habilitar_motores(DERECHA);
+    }
+    if((estado & 0x18) == 0x10){
+        set_speed(DOBLAR_SUAVE);
+        habilitar_motores(IZQUIERDA);
+    }
+    if((estado & 0x10) == 0x00){
+        set_speed(DOBLAR_FUERTE);
+        habilitar_motores(IZQUIERDA);
     }
 }
 
@@ -137,14 +99,15 @@ void init_pins(void){
 }
 
 void determinar_pista(void){
-    color_pista = 0;
-    while(!color_pista){
+    while(1){
         uint8_t estado = PINC;
         if(estado == 0x1B){
-            color_pista = 1;
+            color_pista = 0;
+            break;
         }
         if(estado == 0x04){
-            color_pista = 2;
+            color_pista = 1;
+            break;
         }
     }
 }
