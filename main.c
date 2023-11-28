@@ -5,12 +5,14 @@
 #define TIEMPO_INICIO 5000
 #define VENTANA 100
 #define APAGADO 31250
-#define ACELERAR 255
-#define DOBLAR_SUAVE 230
-#define DOBLAR_FUERTE 200
+#define ACELERAR 220
+#define DOBLAR_SUAVE 210
+#define DOBLAR_FUERTE 190
 #define ADELANTE 0x03
-#define IZQUIERDA 0x01
-#define DERECHA 0x02
+#define IZQUIERDA 0x02
+#define DERECHA 0x01
+#define OFFSET_RUEDA 20
+#define OFFSET_SUAVE 20
 #define OFF 0
 
 volatile uint8_t linea_negra;
@@ -29,9 +31,9 @@ void habilitar_motores(uint8_t modo){
     PORTB |= 0x10;
 }
 
-void set_speed(uint8_t velocidad){
-    OCR0A = velocidad;
-    OCR0B = velocidad;
+void set_speed(uint8_t rueda_1, uint8_t rueda_2){
+    OCR0A = rueda_1;
+    OCR0B = rueda_2;
 }
 
 void iniciar_conteo(uint16_t tiempo){
@@ -45,7 +47,7 @@ void apagar_conteo(void){
 }
 
 ISR(TIMER1_COMPA_vect){
-    set_speed(OFF);
+    set_speed(OFF,OFF);
     habilitar_motores(OFF);
     TCCR1B = 0;
 }
@@ -61,27 +63,27 @@ ISR(TIMER2_COMPA_vect){
     }
     apagar_conteo();
     if(estado & 0x01){
-        set_speed(DOBLAR_FUERTE);
+        set_speed(DOBLAR_FUERTE - OFFSET_RUEDA, DOBLAR_FUERTE);
         habilitar_motores(DERECHA);
         return;
     }
     if(estado & 0x10){
-        set_speed(DOBLAR_FUERTE);
+        set_speed(DOBLAR_FUERTE - OFFSET_RUEDA, DOBLAR_FUERTE);
         habilitar_motores(IZQUIERDA);
         return;
     }
     if(estado & 0x02){
-        set_speed(DOBLAR_SUAVE);
-        habilitar_motores(DERECHA);
+        set_speed(DOBLAR_SUAVE - OFFSET_RUEDA, DOBLAR_SUAVE - OFFSET_SUAVE);
+        habilitar_motores(ADELANTE);
         return;
     }
     if(estado & 0x08){
-        set_speed(DOBLAR_SUAVE);
-        habilitar_motores(IZQUIERDA);
+        set_speed(DOBLAR_SUAVE - OFFSET_RUEDA - OFFSET_SUAVE, DOBLAR_SUAVE);
+        habilitar_motores(ADELANTE);
         return;
     }
     if(estado & 0x04){
-        set_speed(ACELERAR);
+        set_speed(ACELERAR - OFFSET_RUEDA, ACELERAR);
         habilitar_motores(ADELANTE);
         return;
     }
